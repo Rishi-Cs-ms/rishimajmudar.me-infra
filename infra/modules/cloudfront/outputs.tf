@@ -12,3 +12,8 @@ output "distribution_arn" {
   value       = aws_cloudfront_distribution.this.arn
   description = "The ARN of the CloudFront distribution"
 }
+
+output "web_acl_arn" {
+  value       = aws_wafv2_web_acl.this.arn
+  description = "The ARN of the WAFv2 Web ACL attached to the distribution"
+}
