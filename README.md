@@ -12,6 +12,7 @@ The infrastructure follows modern best practices for static site hosting:
 
 - **Frontend Hosting**: AWS S3 Bucket configured for private access.
 - **Content Delivery**: AWS CloudFront (CDN) with Origin Access Control (OAC) to securely serve content globally with low latency.
+- **Edge Security**: AWS WAF (Web Application Firewall) integrated with CloudFront to protect against common web exploits (SQLi, XSS) and bot traffic.
 - **DNS Management**: AWS Route53 for domain and subdomain routing.
 - **Security & SSL**: AWS Certificate Manager (ACM) for HTTPS/TLS encryption.
 - **Deployment Security**: GitHub OIDC (OpenID Connect) for secure, keyless authentication between GitHub Actions and AWS.
@@ -19,7 +20,8 @@ The infrastructure follows modern best practices for static site hosting:
 
 ```mermaid
 graph LR
-    User -->|HTTPS| CloudFront
+    User -->|HTTPS| WAF[AWS WAF]
+    WAF --> CloudFront
     CloudFront -->|OAC| S3[Private S3 Bucket]
     Route53 -->|DNS| CloudFront
     ACM -->|SSL Cert| CloudFront
@@ -29,32 +31,33 @@ graph LR
 
 ## 🚀 Key Features
 
-- **Keyless AWS Authentication**: Implemented GitHub OIDC to eliminate the need for long-lived IAM User Access Keys, significantly improving security posture.
-- **Automated CI/CD Ready**: Configured IAM roles and policies to allow GitHub Actions to sync files to S3 and perform CloudFront cache invalidations automatically.
-- **Robust State Management**: Built-in state locking and consistency using a dedicated DynamoDB table and S3 backend, preventing concurrent execution conflicts.
-- **Modular Design**: Infrastructure is partitioned into reusable modules (`s3`, `cloudfront`, `route53`, `github-oidc`), making it scalable and maintainable.
-- **Security-First Approach**: 
-  - S3 bucket is strictly private; content is only accessible via CloudFront.
-  - Least-privilege IAM policies for deployment.
-  - Enforced HTTPS across all requests.
+- **Enterprise-Grade Edge Security**: 
+  - **AWS WAF Integration**: Deployed a Web Application Firewall with AWS Managed Rule Sets (Core Rule Set, IP Reputation, Known Bad Inputs) and custom rate-limiting to mitigate DDoS and injection attacks.
+  - **CloudFront OAC**: Enforced Origin Access Control to ensure S3 buckets remain strictly private, making the CDN the only gateway.
+- **Keyless AWS Authentication**: Leveraged GitHub OIDC to eliminate long-lived IAM User Access Keys, adopting a temporary-credential security model.
+- **Professional CI/CD Pipeline**: Configured granular IAM policies allowing GitHub Actions to securely sync assets to S3 and trigger CloudFront cache invalidations upon successful deployment.
+- **Production-Ready State Management**: Engineered a robust Terraform backend using S3 for remote state storage and DynamoDB for atomic state locking, ensuring team-safe execution.
+- **Clean, Modular Codebase**: Adhered to "Dry" principles by partitioning infrastructure into reusable core modules (`s3`, `cloudfront`, `route53`, `github-oidc`).
 
 ## 📁 Project Structure
 
 ```text
 .
-├── infra/                  # Main infrastructure configuration
-│   ├── modules/            # Reusable core modules
-│   │   ├── s3/             # S3 bucket provisioning
-│   │   ├── cloudfront/     # CDN and OAC configuration
-│   │   ├── route53/        # DNS records & hosting zones
-│   │   └── github-oidc/    # IAM roles for GitHub Actions
-│   ├── main.tf             # Root configuration file
-│   ├── backend.tf          # Terraform S3 backend setup
-│   ├── variable.tf         # Input variables
-│   └── outputs.tf          # Important resource outputs
-└── statelocking/           # Initial setup for Terraform backend
-    ├── s3.tf               # State storage bucket
-    └── dynamodb.tf         # Lock management table
+├── infra/                  # Core Infrastructure Layer
+│   ├── modules/            # Decoupled Architectural Components
+│   │   ├── s3/             # Origin Storage (Private Assets)
+│   │   ├── cloudfront/     # CDN with OAC & WAF Enforcement
+│   │   ├── route53/        # Managed DNS & Traffic Routing
+│   │   └── github-oidc/    # IAM Federation for Secure CI/CD
+│   ├── main.tf             # Resource Orchestration
+│   ├── backend.tf          # Remote State Configuration
+│   ├── provider.tf         # Multi-Region Setup & Providers
+│   ├── variable.tf         # Parameterized Inputs
+│   └── outputs.tf          # Resource Expose (for CI/CD consumption)
+└── statelocking/           # Initial Bootstrap Infrastructure
+    ├── s3.tf               # Terraform State Persistence
+    ├── dynamodb.tf         # Distributed Locking Mechanism
+    └── provider.tf         # Local Provider Configuration
 ```
 
 ## 🛠️ How to Use
@@ -92,8 +95,11 @@ After successful deployment, Terraform will output:
 ## 👤 Author
 
 **Rishi Majmudar**
-- Website: [rishimajmudar.me](https://rishimajmudar.me)
-- GitHub: [@Rishi-Cs-ms](https://github.com/Rishi-Cs-ms)
+*Cloud Security & DevOps Engineer*
+
+- **Portfolio**: [rishimajmudar.me](https://rishimajmudar.me)
+- **GitHub**: [@Rishi-Cs-ms](https://github.com/Rishi-Cs-ms)
+- **LinkedIn**: [Rishi Majmudar](https://linkedin.com/in/rishimajmudar)
 
 ---
 *Developed as part of a Cloud Engineering portfolio to showcase advanced AWS architecture and DevSecOps practices.*
